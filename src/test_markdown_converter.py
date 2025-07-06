@@ -1,6 +1,7 @@
 import unittest
 from textnode import TextType, TextNode
-from markdown_to_text import split_nodes_delimiter
+from markdown_to_textnode import split_nodes_delimiter, split_nodes_image
+from markdown_to_textnode import split_nodes_link
 
 class TestMarkdowntoTextNode(unittest.TestCase):
 
@@ -86,3 +87,131 @@ class TestMarkdowntoTextNode(unittest.TestCase):
         new_nodes = split_nodes_delimiter(node, "**", TextType.BOLD)
         expected = [TextNode("Plain text", TextType.TEXT)]
         self.assertEqual(new_nodes, expected)
+
+class TestExtractImagesFromMarkdown(unittest.TestCase):
+
+    def test_split_images(self):
+        node = [TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) "
+            "and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT),
+            TextNode("This is a second TextNode with an ![image]"
+                     "(https://i.imgur.com/zjjcJKZ.png)", TextType.TEXT)
+        ]
+        new_nodes = split_nodes_image(node)
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
+                ),
+                TextNode("This is a second TextNode with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png")
+            ],
+            new_nodes,
+        )
+    def test_non_textnode_passed(self):
+        node = ["This is text with an "
+                "![image](https://i.imgur.com/zjjcJKZ.png)"]
+
+        with self.assertRaises(TypeError) as e:
+            split_nodes_image(node)
+        self.assertEqual(str(e.exception), "TypeError: node needs to be "
+                         "a TextNode.")
+        
+    def test_nontext_texttype(self):
+        node = [TextNode("image", TextType.IMAGE, 
+                         "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode("This is a second TextNode with an ![image]"
+                     "(https://i.imgur.com/zjjcJKZ.png)", TextType.TEXT)
+                ]
+        new_nodes = split_nodes_image(node)
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, 
+                         "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode("This is a second TextNode with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, 
+                         "https://i.imgur.com/zjjcJKZ.png")
+            ],
+            new_nodes
+        )
+    
+    def test_no_images(self):
+        node = [TextNode("This is only text with no images.", TextType.TEXT)]
+
+        new_nodes = split_nodes_image(node)
+        self.assertListEqual(
+            [
+                TextNode("This is only text with no images.", TextType.TEXT)
+            ],
+            new_nodes
+        )
+
+class TestExtractLinksFromMarkdown(unittest.TestCase):
+
+    def test_split_links(self):
+        node = [TextNode("This is text with a link "
+                        "[to boot dev](https://www.boot.dev) and "
+                        "[to youtube](https://www.youtube.com/@bootdotdev)",
+                        TextType.TEXT),
+                TextNode("This is a second node with a link [to Google]"
+                "(https://www.google.com) to see if the function can loop " \
+                "over multiple TextNodes", TextType.TEXT)
+        ]
+        new_nodes = split_nodes_link(node)
+        self.assertEqual(
+            [
+                TextNode("This is text with a link ", TextType.TEXT),
+                TextNode("to boot dev", TextType.LINK, "https://www.boot.dev"),
+                TextNode(" and ", TextType.TEXT),
+                TextNode("to youtube", TextType.LINK, 
+                         "https://www.youtube.com/@bootdotdev"),
+                TextNode("This is a second node with a link ", TextType.TEXT),
+                TextNode("to Google", TextType.LINK, "https://www.google.com"),
+                TextNode(" to see if the function can loop "
+                "over multiple TextNodes", TextType.TEXT)
+            ],
+            new_nodes
+        )
+
+    def test_non_textnode_passed(self):
+        node = ["This is a link [to YouTube](https://www.youtube.com)"]
+
+        with self.assertRaises(TypeError) as e:
+            split_nodes_link(node)
+        self.assertEqual(str(e.exception), "TypeError: node needs to be "
+                         "a TextNode.")
+        
+    def test_nontext_texttype(self):
+        node = [TextNode("to Google", TextType.LINK, 
+                         "https://www.google.com"),
+                TextNode("This is a second TextNode with another link "
+                "[to YouTube](https://www.youtube.com)." , TextType.TEXT)
+                ]
+        new_nodes = split_nodes_link(node)
+        self.assertListEqual(
+            [
+                TextNode("to Google", TextType.LINK, 
+                         "https://www.google.com"),
+                TextNode("This is a second TextNode with another link ", 
+                         TextType.TEXT),
+                TextNode("to YouTube", TextType.LINK, 
+                         "https://www.youtube.com"),
+                TextNode(".", TextType.TEXT)
+            ],
+            new_nodes
+        )
+    
+    def test_no_links(self):
+        node = [TextNode("This is only text with no links.", TextType.TEXT)]
+
+        new_nodes = split_nodes_image(node)
+        self.assertListEqual(
+            [
+                TextNode("This is only text with no links.", TextType.TEXT)
+            ],
+            new_nodes
+        )
