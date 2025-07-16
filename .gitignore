@@ -1,0 +1,10 @@
+__pycache__/
+
+# macOS system files
+.DS_Store
+
+# Build output directory
+/public
+
+# Local scripts
+main.sh
