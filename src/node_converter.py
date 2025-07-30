@@ -1,4 +1,4 @@
-from textnode import TextType, TextNode  
+from textnode import TextType, TextNode
 from htmlnode import LeafNode
 
 def text_node_to_html_node(text_node):
@@ -13,7 +13,6 @@ def text_node_to_html_node(text_node):
                   TextType.LINK: "a",
                   TextType.IMAGE: "img",
                   }
-
     
     if text_node.text_type not in html_types:
         raise ValueError(f"Invalid TextType: {text_node.text_type}")
@@ -29,6 +28,6 @@ def text_node_to_html_node(text_node):
             raise ValueError("TextType.LINK requires a valid URL")
         props = {"src": text_node.url, "alt": text_node.text}
         value = None
-    
+
     return LeafNode(html_types[text_node.text_type], 
                     value, props)
