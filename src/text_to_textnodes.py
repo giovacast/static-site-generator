@@ -3,6 +3,9 @@ from markdown_to_textnode import split_nodes_delimiter, split_nodes_image, \
 split_nodes_link
 
 def text_to_textnodes(text):
+    # HTML usually renders on the same line so we need to substitute the \n
+    # characters with spaces
+    text = " ".join(line.strip() for line in text.split("\n") if line.strip())
     # Use the string passed to the function to create a TextNode with
     # TextType.TEXT
     nodes = [TextNode(text, TextType.TEXT)]
